@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my-app14",
-    "slug": "my-app14",
+    "name": "excluir",
+    "slug": "excluir",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,10 +21,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.peterson16.excluir"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f0e15496-8cd2-4ca2-ae61-c68f53e58b23"
+      }
     }
   }
 }
