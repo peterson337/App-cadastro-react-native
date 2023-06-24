@@ -9,7 +9,8 @@ TextInput,
 Button,
 TouchableOpacity,
 Animated,
-Dimensions
+Dimensions,
+TouchableNativeFeedback
 } from 'react-native';
 
 import {db, auth} from "./Firebase";
@@ -39,13 +40,13 @@ export default function App() {
     const [senha, setSenha] = useState('');
     const [user, setUser] = useState('');
 
-    const [login, setLogin] = useState(true);
+    const [login, setLogin] = useState(false);
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user != null) {
-          setUser(user.displayName);
+          setLogin(true);
         }
       });
     
@@ -55,7 +56,7 @@ export default function App() {
 
     const cadastro = () => {
       if (!nome.trim() || !email.trim() || !senha.trim()) { // <----- Se nao tiver vazio, nao faz nada
-        alert("Escreva alguma coisa para adicionar  uma tarefa");
+        alert("Escreva alguma coisa para criar  uma tarefa");
         return
       }
       createUserWithEmailAndPassword(auth, email, senha)
@@ -66,7 +67,6 @@ export default function App() {
           setEmail('');
           setLogin(true);
           setUser(email);
-          setShowModal(false);
         })
         .catch((error) => {
           alert(error.message);
@@ -74,6 +74,11 @@ export default function App() {
     };
 
     const sendLogin = () => {
+      if (!email.trim() || !senha.trim()) { // <----- Se nao tiver vazio, nao faz nada
+        alert("Escreva alguma coisa para logar");
+        return
+      }
+
       signInWithEmailAndPassword(auth, email, senha)
       .then(() => {
         alert("O login foi feito com sucesso 😁");
@@ -96,6 +101,7 @@ export default function App() {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 5000,
+        useNativeDriver: true,
       }).start();
 
 //?        Código para a animção desaparecer
@@ -117,6 +123,13 @@ Todo          }
   const logout = () => {
     auth.signOut();
     setLogin(false);
+    setUser('')
+  }
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEmail('');
+    setSenha('');
   }
 
   return (
@@ -205,60 +218,62 @@ Todo          }
         {
         showModal && (
        
-           <View style={styles.backgroundModal}>
-           {/*  <TouchableOpacity
-              onPress={() => setLogar(false)}
-            
-            > */}
-                
+           <TouchableOpacity 
+           style={styles.backgroundModal}
+           onPress={closeModal}
+           activeOpacity={0}
+           >
+         
+            <TouchableNativeFeedback>
             <View style={styles.modal} >
 
-            <AntDesign name="close" size={24} color="red" 
-              onPress={() => setShowModal(false)}
-              style={styles.close}
-              />
+                <AntDesign name="close" size={24} color="red" 
+                  onPress={closeModal}
+                  style={styles.close}
+                  />
 
-              
+                  
 
-              <Text
-              style={styles.title}
-              >
-              Logar
-             </Text>
+                  <Text
+                  style={styles.title}
+                  >
+                  Logar
+                </Text>
 
-             <TextInput
-            placeholder='Escreva o seu email'
-            style={{...styles.TextInput,
-                         borderBottomColor: 'black',
-                         borderWidth: 1,
+                <TextInput
+                placeholder='Escreva o seu email'
+                style={{...styles.TextInput,
+                            borderBottomColor: 'black',
+                            borderWidth: 1,
 
-            }}
-            value={email}
-            onChangeText={text => setEmail(text)}
-          />
+                }}
+                value={email}
+                onChangeText={text => setEmail(text)}
+                />
 
-          <TextInput
-            secureTextEntry={true}
-            placeholder='Escreva a sua senha'
-            style={{...styles.TextInput,
-                           borderWidth:1,
-                          borderBottomColor: 'black',
+                <TextInput
+                secureTextEntry={true}
+                placeholder='Escreva a sua senha'
+                style={{...styles.TextInput,
+                              borderWidth:1,
+                              borderBottomColor: 'black',
 
-            }}
-            value={senha}
-            onChangeText={text => setSenha(text)}
-          />
+                }}
+                value={senha}
+                onChangeText={text => setSenha(text)}
+                />
 
-          
-          <TouchableOpacity style={styles.TouchableOpacity} 
-            onPress={sendLogin}>
-            <Text style={styles.TouchableOpacityText}>Fazer login</Text>
+
+                <TouchableOpacity style={styles.TouchableOpacity} 
+                onPress={sendLogin}>
+                <Text style={styles.TouchableOpacityText}>Fazer login</Text>
+                </TouchableOpacity>
+
+                </View>
+
+            </TouchableNativeFeedback>    
+            
           </TouchableOpacity>
-
-            </View>
-
-            {/* </TouchableOpacity> */}
-          </View>
         )}
       </Animated.View>
     </View>
