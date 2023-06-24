@@ -22,16 +22,36 @@ import {
   query
 } from "firebase/firestore";
 
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { 
+createUserWithEmailAndPassword, 
+updateProfile,
+signInWithEmailAndPassword,
+onAuthStateChanged 
+ } from 'firebase/auth';
+ 
+import { AntDesign } from '@expo/vector-icons'; 
+
 
 
 export default function App() {
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
-    const [login, setLogin] = useState(false);
-    const [logar, setLogar] = useState(false);
+    const [user, setUser] = useState('');
 
+    const [login, setLogin] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user != null) {
+          setUser(user.displayName);
+        }
+      });
+    
+      return () => unsubscribe(); // Certifique-se de cancelar a inscrição quando o componente for desmontado
+    }, []);
+    
 
     const cadastro = () => {
       if (!nome.trim() || !email.trim() || !senha.trim()) { // <----- Se nao tiver vazio, nao faz nada
@@ -40,11 +60,29 @@ export default function App() {
       }
       createUserWithEmailAndPassword(auth, email, senha)
         .then(() => {
-          alert("A sua conta foi criada com sucesso 😁");
+          alert("A sua conta foi criada com sucesso 😁 ");
           setNome('');
           setSenha('');
           setEmail('');
           setLogin(true);
+          setUser(email);
+          setShowModal(false);
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    };
+
+    const sendLogin = () => {
+      signInWithEmailAndPassword(auth, email, senha)
+      .then(() => {
+        alert("O login foi feito com sucesso 😁");
+        setNome('');
+        setSenha('');
+        setEmail('');
+        setLogin(true);
+        setUser(email);
+        setShowModal(false);
 
         })
         .catch((error) => {
@@ -76,6 +114,10 @@ Todo          }
  */
   }, [])
     
+  const logout = () => {
+    auth.signOut();
+    setLogin(false);
+  }
 
   return (
     <View style={styles.container}>
@@ -91,10 +133,37 @@ Todo          }
   
         {login ? (
           <View>
-            <TouchableOpacity style={styles.TouchableOpacity} onPress={() => setLogin(false)}>
+
+              <Text
+              style={{...styles.title,
+                        color: 'white',
+                        borderBottomWidth: 0,
+
+                        marginHorizontal: 30,
+
+
+              }}
+              >Bem-vindo de volta ao app {user}
+              </Text>
+
+              
+              <Text
+              style={{...styles.title,
+                        color: 'white',
+                        borderBottomWidth: 0,
+                        marginHorizontal: 30,
+                        fontSize: 30,
+
+              }}
+              >Ainda não tem curso neste app 😔
+              </Text>
+
+            <TouchableOpacity style={styles.TouchableOpacity} 
+               onPress={logout}>
               <Text style={styles.TouchableOpacityText}>Deslogar</Text>
             </TouchableOpacity>
           </View>
+
         ) : (
           <>
             <TextInput
@@ -119,24 +188,76 @@ Todo          }
               onChangeText={text => setSenha(text)}
             />
   
-            <TouchableOpacity style={styles.TouchableOpacity} onPress={cadastro}>
+            <TouchableOpacity style={styles.TouchableOpacity} 
+              onPress={cadastro}>
               <Text style={styles.TouchableOpacityText}>Cadastrar-se</Text>
             </TouchableOpacity>
   
             <TouchableOpacity style={styles.TouchableOpacity} 
-              onPress={() => setLogar(true)}
+              onPress={() => setShowModal(true)}
               >
-              <Text style={styles.TouchableOpacityText}>Abrir modal para logar</Text>
+              <Text style={styles.TouchableOpacityText}
+              >Abrir modal para logar</Text>
             </TouchableOpacity>
           </>
         )}
   
-        {logar && (
+        {
+        showModal && (
        
            <View style={styles.backgroundModal}>
-          
-            <View style={styles.modal} />
+           {/*  <TouchableOpacity
+              onPress={() => setLogar(false)}
+            
+            > */}
+                
+            <View style={styles.modal} >
 
+            <AntDesign name="close" size={24} color="red" 
+              onPress={() => setShowModal(false)}
+              style={styles.close}
+              />
+
+              
+
+              <Text
+              style={styles.title}
+              >
+              Logar
+             </Text>
+
+             <TextInput
+            placeholder='Escreva o seu email'
+            style={{...styles.TextInput,
+                         borderBottomColor: 'black',
+                         borderWidth: 1,
+
+            }}
+            value={email}
+            onChangeText={text => setEmail(text)}
+          />
+
+          <TextInput
+            secureTextEntry={true}
+            placeholder='Escreva a sua senha'
+            style={{...styles.TextInput,
+                           borderWidth:1,
+                          borderBottomColor: 'black',
+
+            }}
+            value={senha}
+            onChangeText={text => setSenha(text)}
+          />
+
+          
+          <TouchableOpacity style={styles.TouchableOpacity} 
+            onPress={sendLogin}>
+            <Text style={styles.TouchableOpacityText}>Fazer login</Text>
+          </TouchableOpacity>
+
+            </View>
+
+            {/* </TouchableOpacity> */}
           </View>
         )}
       </Animated.View>
@@ -149,9 +270,8 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#01b0f1',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 20,
+
+      
     },
 
   Image: {
@@ -161,11 +281,15 @@ const styles = StyleSheet.create({
 
   divImage: {
     position: 'relative',
-    right: 25,
+    marginTop: 40,
+    right: 10,
+    
+
 },
 
   TextInput: {
-    width: '100%',
+    marginHorizontal: 20,
+    width: '90%',
     height: 40,
     backgroundColor: 'white',
     borderRadius: 20,
@@ -175,7 +299,8 @@ const styles = StyleSheet.create({
   },
 
   TouchableOpacity: {
-    width: '100%',
+    marginHorizontal: 20,
+    width: '90%',
     height: 40,
     backgroundColor: '#ff262a',
     borderRadius: 20,
@@ -202,8 +327,45 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: 'rgba(0,0,0,0.6)',
     zIndex: 1,
-
+    paddingBottom: 790,
+    
   },
 
+  modal: {
+    position: 'relative',
+    backgroundColor: 'white',
+    height: 370,
+    width: '95%',
+    marginHorizontal: 10,
+    position: 'absolute',
+    left: 0,
+    top: '50%',
+//!    370 / 2 = 185   
+   marginTop: 185,
+    padding: 10,
+    borderRadius: 20,
+  },
+
+  close: {
+    position: 'absolute',
+    right: 0,
+    backgroundColor: 'red',
+    padding: 5,
+    borderRadius: 20,
+    color: "white",
+    width: 35, 
+    marginRight: 10,
+    marginTop: 10,
+},  
+
+title: {
+  fontSize: 25,
+  borderBottomColor: 'black',
+  borderBottomWidth: 1,
+  margin: 20,
+  marginHorizontal: 70,
+  textAlign: 'center',
+  paddingBottom: 10,
+},
 
 });
